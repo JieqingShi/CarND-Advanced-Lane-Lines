@@ -62,7 +62,6 @@ def mag_thresh(img, thresh=(0, 255), sobel_kernel=3):
     # Create a binary mask where mag thresholds are met
     binary_output = np.zeros_like(scaled_sobel)
     binary_output[(scaled_sobel >= thresh[0]) & (scaled_sobel <= thresh[1])] = 1
- 
     return binary_output
 
 
@@ -100,119 +99,7 @@ def hist(img):
     return histogram
 
 
-def find_lane_pixels(binary_warped):
-    print(binary_warped.shape)  # 720 x 1280
-    # Take a histogram of the bottom half of the image
-    histogram = np.sum(binary_warped[binary_warped.shape[0]//2:,:], axis=0)
-    # Create an output image to draw on and visualize the result
-    out_img = np.dstack((binary_warped, binary_warped, binary_warped))
-    # Find the peak of the left and right halves of the histogram
-    # These will be the starting point for the left and right lines
-    midpoint = np.int(histogram.shape[0]//2)  # 640
-    #print("midpoint: {}".format(midpoint))
-    leftx_base = np.argmax(histogram[:midpoint])  # 327
-    #print("leftx_base: {}".format(leftx_base))
-    rightx_base = np.argmax(histogram[midpoint:]) + midpoint  # 971
-    #print("rightx_base: {}".format(rightx_base))
 
-    # HYPERPARAMETERS
-    # Choose the number of sliding windows
-    nwindows = 9  # number of windows on vertical axis
-    # Set the width of the windows +/- margin
-    margin = 100
-    # Set minimum number of pixels found to recenter window
-    minpix = 50
-
-    # Set height of windows - based on nwindows above and image shape
-    window_height = np.int(binary_warped.shape[0]//nwindows)  # 80
-    # print("window_height: {}".format(window_height)) 
-    # Identify the x and y positions of all nonzero pixels in the image
-    nonzero = binary_warped.nonzero()  # a tuple for x and y
-    nonzeroy = np.array(nonzero[0])
-    #print((nonzeroy.max(), nonzeroy.min()))  # (719, 0)
-    #print("length nonzeroy {}".format(len(nonzeroy)))  # 89486 nonzero pixel elements found
-    nonzerox = np.array(nonzero[1])
-    #print((nonzerox.max(), nonzerox.min()))  # (1279, 0)
-    #print("length nonzerox {}".format(len(nonzerox)))  # 89486
-    # Current positions to be updated later for each window in nwindows
-    leftx_current = leftx_base
-    rightx_current = rightx_base
-
-    # Create empty lists to receive left and right lane pixel indices
-    left_lane_inds = []
-    right_lane_inds = []
-
-    # Step through the windows one by one
-    for window in range(nwindows):  # index 0 to 8
-        # Identify window boundaries in x and y (and right and left)
-        win_y_low = binary_warped.shape[0] - (window+1)*window_height  # go up the picture starting from picture 640 in steps of 80 to 0
-        # top edge of the window
-        #print("win_y_low: {}".format(win_y_low))
-        win_y_high = binary_warped.shape[0] - window*window_height  # 80 more than win_y_low, goes up the picture up to 80
-        # bottom edge of the window
-        # print("win_y_high: {}".format(win_y_high))
-        ### TO-DO: Find the four below boundaries of the window ###
-        
-        # corresponds to four corners
-        #win_xleft_low = 0  # Update this
-        #win_xleft_high = 0  # Update this
-        #win_xright_low = 0  # Update this
-        #win_xright_high = 0  # Update this
-        win_xleft_low = leftx_current - margin
-        win_xleft_high = leftx_current + margin
-        win_xright_low = rightx_current - margin
-        win_xright_high = rightx_current + margin
-        
-        
-        # Draw the windows on the visualization image
-        cv2.rectangle(out_img,(win_xleft_low,win_y_low), 
-        (win_xleft_high,win_y_high),(0,255,0), 2) # bottom left to top right, in green, with thickness 2
-        cv2.rectangle(out_img,(win_xright_low,win_y_low),
-        (win_xright_high,win_y_high),(0,255,0), 2) 
-        
-        ### TO-DO: Identify the nonzero pixels in x and y within the window ###
-        #good_left_inds = None
-        #good_right_inds = None
-        # all conditions return False, True of same length as nonzerox/y
-        good_left_inds = ((nonzerox >= win_xleft_low) & (nonzerox < win_xleft_high) & 
-            (nonzeroy >= win_y_low ) & (nonzeroy < win_y_high)).nonzero()[0]
-        good_right_inds = ((nonzerox >= win_xright_low) & (nonzerox < win_xright_high) & 
-            (nonzeroy >= win_y_low ) & (nonzeroy < win_y_high)).nonzero()[0]
-        # index 0 because we are only interested in the horizontal position
-        # shows which element in nonzerox are nonzero
-        # print(good_left_inds.min(), good_left_inds.max())  # why does it go up to 82000??
-        # Append these indices to the lists
-        left_lane_inds.append(good_left_inds)  # indices
-        right_lane_inds.append(good_right_inds)
-        #print(len(good_left_inds))
-        #print(len(good_right_inds))
-        
-        ### TO-DO: If you found > minpix pixels, recenter next window ###
-        ### (`right` or `leftx_current`) on their mean position ###
-        # nonzero operates on an index level! so get exact pixel value based on index of nonzero!
-        if len(good_left_inds) > minpix:
-            leftx_current = int(np.mean(nonzerox[good_left_inds]))
-            # print(leftx_current)
-        if len(good_right_inds) > minpix:
-            rightx_current = int(np.mean(nonzerox[good_right_inds]))
-            # print(rightx_current)
-        #pass # Remove this when you add your function
-
-    # Concatenate the arrays of indices (previously was a list of lists of pixels)
-    try:
-        left_lane_inds = np.concatenate(left_lane_inds)
-        right_lane_inds = np.concatenate(right_lane_inds)
-    except ValueError:
-        # Avoids an error if the above is not implemented fully
-        pass
-
-    # Extract left and right line pixel positions
-    leftx = nonzerox[left_lane_inds]
-    lefty = nonzeroy[left_lane_inds] 
-    rightx = nonzerox[right_lane_inds]
-    righty = nonzeroy[right_lane_inds]
-
-    return leftx, lefty, rightx, righty, out_img
 
 
 def fit_polynomial(binary_warped):
@@ -323,6 +210,10 @@ def search_around_poly(binary_warped):
     ## End visualization steps ##
     
     return result
+
+
+def find_lanes_restart():
+    pass
 
 
 def measure_curvature_pixels():
