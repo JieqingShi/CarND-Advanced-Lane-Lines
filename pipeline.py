@@ -223,8 +223,8 @@ def fit_polynomial(binary_warped):
     #left_fit = None
     #right_fit = None
 
-    left_fit = np.polyfit(leftx, lefty, deg=2)
-    right_fit = np.polyfit(rightx, righty, deg=2)
+    left_fit = np.polyfit(lefty, leftx, deg=2)
+    right_fit = np.polyfit(righty, rightx, deg=2)
     # Generate x and y values for plotting
     ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
     try:
@@ -250,8 +250,8 @@ def fit_polynomial(binary_warped):
 
 def fit_poly(img_shape, leftx, lefty, rightx, righty):
     ### TO-DO: Fit a second order polynomial to each with np.polyfit() ###
-    left_fit = np.polyfit(leftx, lefty, deg=2)
-    right_fit = np.polyfit(rightx, righty, deg=2)
+    left_fit = np.polyfit(lefty, leftx, deg=2)
+    right_fit = np.polyfit(righty, rightx, deg=2)
     # Generate x and y values for plotting
     ploty = np.linspace(0, img_shape[0]-1, img_shape[0])
     ### TO-DO: Calc both polynomials using ploty, left_fit and right_fit ###
