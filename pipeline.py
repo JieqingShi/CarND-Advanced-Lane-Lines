@@ -14,6 +14,8 @@ import glob
 #     dst = cv2.undistort(img, mtx, dist, None, mtx)
 #     return dst
 hls_dict = dict(H=0, L=1, S=2)
+rgb_dict = dict(R=0, G=1, B=2)
+luv_dict = dict(l=0, u=1, v=2)
 
 def perspective_transform(img, mtx, dist, src, dst, img_size):
     """ Transforms image to bird-eye view """
@@ -82,7 +84,7 @@ def dir_thresh(img, thresh=(0, np.pi/2), sobel_kernel=3):
 
 def hls_thresh(img, hls_channel="S", thresh=(0, 255)):  # ToDo: can be generalized to any color space
     # Convert to HLS color space
-    hls = cv2.cvtColor(img, cv2.COLOR_RGB2HLS)
+    hls = cv2.cvtColor(img, cv2.COLOR_BGR2HLS)
     # Apply a threshold to channel
     channel_num = hls_dict[hls_channel]
     channel_dim = hls[:,:,channel_num]
@@ -90,6 +92,25 @@ def hls_thresh(img, hls_channel="S", thresh=(0, 255)):  # ToDo: can be generaliz
     binary_output = np.zeros_like(channel_dim)
     binary_output[(channel_dim > thresh[0]) & (channel_dim <= thresh[1])] = 1
 
+    return binary_output
+
+def rgb_thresh(img, rgb_channel="R", thresh=(0, 255)):
+    rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    channel_num = rgb_dict[rgb_channel]
+    channel_dim = rgb[:,:,channel_num]
+    binary_output = np.zeros_like(channel_dim)
+    binary_output[(channel_dim > thresh[0]) & (channel_dim <= thresh[1])] = 1
+    
+    return binary_output
+
+
+def luv_thresh(img, luv_channel="l", thresh=(0, 255)):
+    luv = cv2.cvtColor(img, cv2.COLOR_BGR2LUV)
+    channel_num = luv_dict[luv_channel]
+    channel_dim = luv[:,:,channel_num]
+    binary_output = np.zeros_like(channel_dim)
+    binary_output[(channel_dim > thresh[0]) & (channel_dim <= thresh[1])] = 1
+    
     return binary_output
 
 def hist(img):
